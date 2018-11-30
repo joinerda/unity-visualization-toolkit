@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: 91773a405113c7d4cb6435619dc652df
+timeCreated: 1472751944
+licenseType: Free
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - BBallPRE: {fileID: 100804, guid: 3e350174ec753a34e961e3202d92b027, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
