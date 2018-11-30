@@ -9,6 +9,6 @@ Visualization objects include glyph plots, quiver plots, volumetric plots, isoco
 
 Planned expansion of the UVT includes increased ability to embed 2D plots insideof the UI and in VR scenes, efficiency improvements for mobile hardware, enhanced editor features to simplify scene creation, and improvements in how meshes are handled in the case of sets with a large number of vertices.
 
-You may use the UVT in non-commercial projects. Please let me know how you are using it so I can continue to improve it. 
+You may use the UVT in non-commercial projects. Please let me know how you are using it so I can continue to improve it.
 
 
