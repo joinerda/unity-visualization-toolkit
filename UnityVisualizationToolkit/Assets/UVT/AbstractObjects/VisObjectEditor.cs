@@ -49,7 +49,7 @@ public class VisObjectEditor : Editor {
 				visObject.minValue = EditorGUILayout.FloatField ("Min Value", visObject.minValue);
 				visObject.maxValue = EditorGUILayout.FloatField ("Max Value", visObject.maxValue);
 
-				visObject.threshholdPRE = (GameObject) EditorGUILayout.ObjectField ("Data Object",visObject.threshholdPRE,typeof(GameObject),true);
+				visObject.threshholdPRE = (GameObject) EditorGUILayout.ObjectField ("Threshhold PRE",visObject.threshholdPRE,typeof(GameObject),true);
 				visObject.maxDepth = EditorGUILayout.IntField ("Max Depth", visObject.maxDepth);
 
 			}
