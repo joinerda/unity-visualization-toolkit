@@ -196,11 +196,11 @@ public class VisObject : MonoBehaviour {
 			glyphSet.setMask (mask);
 			glyphSet.setDrawBar (drawBars);
 			glyphSet.setXName (indVarNames [0]);
-			glyphSet.setYName (indVarNames [1]);
-			glyphSet.setZName (indVarNames [2]);
+			if (indVarNames.Length > 1) glyphSet.setYName (indVarNames [1]);
+            if (indVarNames.Length > 2) glyphSet.setZName (indVarNames [2]);
 			glyphSet.setColor (color);
 			glyphSet.setCName (colorVar);
-			glyphSet.setSName (depVar);
+			glyphSet.setSName (""); // replace with size array for glyphs
 			glyphSet.setVNames (sizeVars);
 			glyphSet.setAlpha (alpha);
 			glyphSet.setColorScale (colorScale);
