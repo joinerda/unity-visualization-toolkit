@@ -293,7 +293,7 @@ public class GlyphSet : MonoBehaviour {
 	/// </summary>
 	/// <param name="vNames">V names.</param>
 	public void setVNames(string [] vNames) {
-		if (vNames.Length != 3  && vNames.Length != 0) {
+		if (vNames.Length != 3  && vNames.Length != 0 && vNames.Length != 1) {
 			return;
 		}
 		this.vNames = vNames;
@@ -445,12 +445,17 @@ public class GlyphSet : MonoBehaviour {
 				//color.a = glyphPRE.GetComponent<Renderer> ().sharedMaterial.color.a;
 				color.a=alpha;
 			}
-			if (sName == null|| sName.Equals("")) {
+
+            if (sName == null|| sName.Equals("")) {
 				sval = size;
-			} else {
+                if(vNames != null && vNames.Length==1)
+                {
+                    sval = uData.getValue(vNames[0], i);
+                }
+            } else {
 				sval = (float)uData.getValue (sName, i);
 			}
-			if (vNames == null || vNames.Length == 0) {
+			if (vNames == null || vNames.Length == 0 || vNames.Length == 1) {
 				theGlyphs [iOb] = (GameObject)Instantiate (glyphPRE, Vector3.zero, Quaternion.identity);
 				theGlyphs [iOb].transform.parent = transform;
 				theGlyphs [iOb].GetComponent<Renderer> ().material.color = color;
@@ -550,10 +555,14 @@ public class GlyphSet : MonoBehaviour {
 			}
 			if (sName == null|| sName.Equals("")) {
 				sval = size;
-			} else {
+                if (vNames != null && vNames.Length == 1)
+                {
+                    sval = uData.getValue(vNames[0], i);
+                }
+            } else {
 				sval = (float)uData.getValue (sName, i);
 			}
-			if (vNames == null || vNames.Length == 0) {
+			if (vNames == null || vNames.Length == 0 || vNames.Length==1) {
 				theGlyphs [iOb].transform.parent = transform;
 				theGlyphs [iOb].GetComponent<Renderer> ().material.color = color;
 				is3D = false;

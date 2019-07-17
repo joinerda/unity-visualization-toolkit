@@ -67,6 +67,7 @@ public class VisObject : MonoBehaviour {
 			Destroy (visGO);
 		}
 		GetComponent<Renderer> ().enabled = false;
+        if (dataObject != null) dataObject.GetComponent<Renderer>().enabled = false;
 		switch (visType) {
 		case(VisType.GLYPH):
 			// create a GlyphSet object using the dataset
@@ -107,6 +108,10 @@ public class VisObject : MonoBehaviour {
 				float[] z = sd.getDimension (indVarNames [2]);
 				float[,,] depValues = sd.getValues3D (depVar);
 				float[,,] colorValues = sd.getValues3D (colorVar);
+                if(colorValues==null)
+                    {
+                        cm = new ColorMap(new Color[] { color }, new float[] { 0 });
+                    }
 				visGO.GetComponent<IsoContour>().buildMesh (x, y, z, depValues, colorValues, isoValue, cm);
 				//m.Optimize ();
 				isoValueLast =  isoValue;
@@ -241,7 +246,11 @@ public class VisObject : MonoBehaviour {
 					float[] z = sd.getDimension (indVarNames [2]);
 					float[,,] depValues = sd.getValues3D (depVar);
 					float[,,] colorValues = sd.getValues3D (colorVar);
-					visGO.GetComponent<IsoContour> ().buildMesh (x, y, z, depValues, colorValues, isoValue, cm);
+                    if (colorValues == null)
+                    {
+                        cm = new ColorMap(new Color[] { color }, new float[] { 0 });
+                    }
+                    visGO.GetComponent<IsoContour> ().buildMesh (x, y, z, depValues, colorValues, isoValue, cm);
 					//m.Optimize ();
 					isoValueLast = isoValue;
 					depVarLast = depVar;

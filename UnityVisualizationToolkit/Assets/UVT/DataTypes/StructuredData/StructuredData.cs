@@ -464,10 +464,10 @@ public class StructuredData : ScriptableObject {
 		if (nd != 3) {
 			Debug.Log ("INCORRECT # dimensions");
 		}
-		float[,,] retval = new float[n [2], n [1], n [0]]; 
+		float[,,] retval = new float[n [0], n [1], n [2]]; 
 		for (int i = 0; i < buffer.Length; i++) {
-			int iz = i % n [0];
-			int it = i / n [0];
+			int iz = i % n [2];
+			int it = i / n [2];
 			int iy = it % (n [1]);
 			int ix = it / (n [1]);
 			retval [ix, iy, iz] = buffer [i];

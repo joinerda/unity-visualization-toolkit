@@ -429,14 +429,29 @@ public class IsoContour : MonoBehaviour  {
 						val [6] = values [i + 1, j + 1, k + 1];
 						val [7] = values [i, j + 1, k + 1];
 						grid.val = val;
-						cval [0] = cValues [i, j, k];
-						cval [1] = cValues [i + 1, j, k];
-						cval [2] = cValues [i + 1, j + 1, k];
-						cval [3] = cValues [i, j + 1, k];
-						cval [4] = cValues [i, j, k + 1];
-						cval [5] = cValues [i + 1, j, k + 1];
-						cval [6] = cValues [i + 1, j + 1, k + 1];
-						cval [7] = cValues [i, j + 1, k + 1];
+                        // if cval is null use solid color
+                        if(cValues==null)
+                        {
+                            cval[0] = isolevel;
+                            cval[1] = isolevel;
+                            cval[2] = isolevel;
+                            cval[3] = isolevel;
+                            cval[4] = isolevel;
+                            cval[5] = isolevel;
+                            cval[6] = isolevel;
+                            cval[7] = isolevel;
+                        } else
+                        {
+                            cval[0] = cValues[i, j, k];
+                            cval[1] = cValues[i + 1, j, k];
+                            cval[2] = cValues[i + 1, j + 1, k];
+                            cval[3] = cValues[i, j + 1, k];
+                            cval[4] = cValues[i, j, k + 1];
+                            cval[5] = cValues[i + 1, j, k + 1];
+                            cval[6] = cValues[i + 1, j + 1, k + 1];
+                            cval[7] = cValues[i, j + 1, k + 1];
+                        }
+					
 						grid.cValues = cval;
 						tl.addList( grid.getPolygons (isolevel,cm));
 					}

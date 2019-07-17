@@ -152,21 +152,21 @@ public class MeshGrid : MonoBehaviour {
 
 		for(int i=0;i<nx;i++) {
 			for (int j = 0; j < ny; j++) {
-				int iv = nx * i + j;
+				int iv = ny * i + j;
 
-				vertices [iv] = new Vector3 ((float)x [i], (float)z[i*nx+j], (float)y [j]);
+				vertices [iv] = new Vector3 ((float)x [i], (float)z[i*ny+j], (float)y [j]);
 				uvs [iv] = new Vector2 ((float)i / (float)nx, (float)j / (float)ny);
 				if(i<nx-1&&j<ny-1) {
-					int it = i * (nx - 1) + j;
+					int it = i * (ny - 1) + j;
 					triangles [it * 6] = iv;
 					triangles [it * 6 + 1] = iv + 1;
-					triangles [it * 6 + 2] = iv + nx + 1;
+					triangles [it * 6 + 2] = iv + ny + 1;
 					triangles [it * 6 + 3] = iv;
-					triangles [it * 6 + 4] = iv + nx + 1;
-					triangles [it * 6 + 5] = iv + nx;
+					triangles [it * 6 + 4] = iv + ny + 1;
+					triangles [it * 6 + 5] = iv + ny;
 				}
 				if (u != null)
-					colors [iv] = evalGScale (u [i * nx + j]);
+					colors [iv] = evalGScale (u [i * ny + j]);
 				else
 					colors [iv] = color;
 			}
