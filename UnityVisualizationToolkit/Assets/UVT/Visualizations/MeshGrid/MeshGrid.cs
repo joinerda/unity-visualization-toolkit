@@ -219,9 +219,9 @@ public class MeshGrid : MonoBehaviour {
 
 		for(int i=0;i<nx;i++) {
 			for (int j = 0; j < ny; j++) {
-				int iv = nx * i + j;
+				int iv = ny * i + j;
 				if (u != null)
-					colors [iv] = evalGScale (u [i * nx + j]);
+					colors [iv] = evalGScale (u [i * ny + j]);
 				else
 					colors [iv] = color;
 			}

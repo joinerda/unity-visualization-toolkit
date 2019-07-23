@@ -12,18 +12,19 @@ using UnityEngine.UI;
 /// </summary>
 public class DataObject : MonoBehaviour {
 
-	/// <summary>
-	/// supported data types
-	/// </summary>
-	public enum DataTypes {
-		STRUCTURED_WOD, UNSTRUCTURED_WOD, UNSTRUCTURED_CSV, MOLECULE_MOL
-	};
-	string[] DataTypeNames = {"Structured (WOD)",
-		"Unstructured (WOD)",
-		"Unstructured (CSV)",
-		"Molecule (MOL)"};
+    /// <summary>
+    /// supported data types
+    /// </summary>
+    public enum DataTypes
+    {
+        STRUCTURED_WOD, STRUCTURED_C2D, UNSTRUCTURED_WOD, UNSTRUCTURED_CSV, MOLECULE_MOL
+    };
+    string[] DataTypeNames = {"Structured (WOD)","Structured (C2D)",
+        "Unstructured (WOD)",
+        "Unstructured (CSV)",
+        "Molecule (MOL)"};
 
-	public string filename = "csv_input.txt";
+    public string filename = "csv_input.txt";
 	string filepath;
 	public DataTypes dataType = DataTypes.UNSTRUCTURED_CSV;
 	System.Object data = null;
@@ -38,28 +39,33 @@ public class DataObject : MonoBehaviour {
 
 	void processFilepath(string filepath){
 		switch (dataType) {
-		case DataTypes.UNSTRUCTURED_CSV:
-			data = ScriptableObject.CreateInstance ("UnstructuredData");
-			((UnstructuredData)data).readCSV (filepath);
-			break;
-		case DataTypes.UNSTRUCTURED_WOD:
-			data = ScriptableObject.CreateInstance ("UnstructuredData");
-			((UnstructuredData)data).readWODHeaders (filepath);
-			((UnstructuredData)data).readWODSet ();
+		    case DataTypes.UNSTRUCTURED_CSV:
+			    data = ScriptableObject.CreateInstance ("UnstructuredData");
+			    ((UnstructuredData)data).readCSV (filepath);
+			    break;
+		    case DataTypes.UNSTRUCTURED_WOD:
+			    data = ScriptableObject.CreateInstance ("UnstructuredData");
+			    ((UnstructuredData)data).readWODHeaders (filepath);
+			    ((UnstructuredData)data).readWODSet ();
 
-			break;
-		case DataTypes.STRUCTURED_WOD:
-			data = ScriptableObject.CreateInstance ("StructuredData");
-			((StructuredData)data).readWOD (filepath);
+			    break;
+            case DataTypes.STRUCTURED_C2D:
+                data = ScriptableObject.CreateInstance("StructuredData");
+                ((StructuredData)data).readC2D(filepath);
 
-			break;
-		case DataTypes.MOLECULE_MOL:
-			data = Molecule.readSybMol (filepath);
+                break;
+            case DataTypes.STRUCTURED_WOD:
+		        data = ScriptableObject.CreateInstance ("StructuredData");
+		        ((StructuredData)data).readWOD (filepath);
 
-			break;
-		default:
-			Debug.Log ("Unrecognized file type");
-			break;
+		        break;
+		    case DataTypes.MOLECULE_MOL:
+			    data = Molecule.readSybMol (filepath);
+
+			    break;
+		    default:
+			    Debug.Log ("Unrecognized file type");
+			    break;
 		}
 		//dibDropdown.value = (int)dataType;
 
@@ -96,17 +102,19 @@ public class DataObject : MonoBehaviour {
 	/// </summary>
 	public void nextSet() {
 		switch (dataType) {
-		case DataTypes.UNSTRUCTURED_CSV:
-			break;
-		case DataTypes.UNSTRUCTURED_WOD:
-			((UnstructuredData)data).readWODSet ();
-			break;
-		case DataTypes.STRUCTURED_WOD:
-			break;
-		case DataTypes.MOLECULE_MOL:
-			break;
-		default:
-			break;
+		    case DataTypes.UNSTRUCTURED_CSV:
+			    break;
+		    case DataTypes.UNSTRUCTURED_WOD:
+			    ((UnstructuredData)data).readWODSet ();
+			    break;
+            case DataTypes.STRUCTURED_C2D:
+                break;
+            case DataTypes.STRUCTURED_WOD:
+			    break;
+		    case DataTypes.MOLECULE_MOL:
+			    break;
+		    default:
+			    break;
 		}
 	}
 }

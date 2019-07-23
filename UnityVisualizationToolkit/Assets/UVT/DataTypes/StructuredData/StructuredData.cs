@@ -61,11 +61,146 @@ public class StructuredData : ScriptableObject {
 		return uData;
 	}
 
-	/// <summary>
-	/// Read a file in WOD format and populate the data object
-	/// </summary>
-	/// <param name="filepath">Filepath.</param>
-	public void readWOD(string filepath) {
+    /// <summary>
+    /// Read a file in CSV2D format and populate the data object
+    /// </summary>
+    /// <param name="filepath">Filepath.</param>
+    public void readC2D(string filepath)
+    {
+        // read a 2D structured file in CSV format. First row is dimension 1
+        // first element on each row is dimension 2. var name in first corner element
+        /*
+         
+        DIMENSIONS x y
+        z 1 2 3 4
+        1 0 1 2 0
+        2 3 2 1 .2
+        3 7 2 8 9
+        4 2 6 3 4
+        NEWVAR
+        z2 1 2 3 4
+        1 0 1 2 0
+        2 3 2 1 .2
+        3 7 2 8 9
+        4 2 6 3 4
+
+         */
+        StreamReader sr = new StreamReader(filepath);
+        string line;
+        // metadata line
+        IOExtras.ReadLine2(sr, out line);
+        string[] words = IOExtras.StringArray(line);
+        if (!words[0].Equals("DIMENSION", System.StringComparison.OrdinalIgnoreCase))
+        {
+            Debug.Log("INVALID FILE TYPE readCSV2D");
+            return;
+        }
+        if (words.Length < 3)
+        {
+            Debug.Log("INVALID FILE TYPE readCSV2D");
+            return;
+        }
+        string dim1name = words[1];
+        string dim2name = words[2];
+
+        bool varsToAdd = true;
+        bool dimensionsAdded = false;
+        bool firstLine = true;
+
+        int n1 = 0;
+        int n2 = 0;
+        string varname = "";
+        ArrayList dim2List = null;
+        ArrayList[] valuesList = null;
+        float[] dim1array = null;
+
+        while (varsToAdd)
+        {
+
+          
+            // read first line
+            if (firstLine)
+            {
+                firstLine = false;
+                IOExtras.ReadLine2(sr, out line);
+                words = IOExtras.StringArray(line);
+                varname = words[0];
+                n1 = words.Length - 1;
+                dim1array = new float[n1];
+                for (int i = 0; i < n1; i++)
+                {
+                    dim1array[i] = float.Parse(words[i + 1]);
+                }
+
+                n2 = 0;
+                dim2List = new ArrayList();
+                valuesList = new ArrayList[n1];
+                for (int i = 0; i < n1; i++)
+                {
+                    valuesList[i] = new ArrayList();
+                }
+            }
+            else
+            {
+                varsToAdd = false;
+                while (IOExtras.ReadLine2(sr, out line))
+                {
+                    //IOExtras.ReadLine2(sr, out line);
+                    string[] words2 = IOExtras.StringArray(line);
+                    if (words2[0].Equals("NEWVAR", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        varsToAdd = true;
+                        firstLine = true;
+                        break;
+                    }
+                    else
+                    {
+                        float[] values = IOExtras.FloatArray(line);
+                        if (values.Length != n1 + 1)
+                        {
+                            Debug.Log("INVALID LINE LENGTH IN readCSV2D");
+                            Debug.Log(n1 + 1);
+                            Debug.Log(values.Length);
+                            Debug.Log(line);
+                            return;
+                        }
+                        dim2List.Add(values[0]);
+                        for (int i = 0; i < n1; i++)
+                        {
+                            valuesList[i].Add(values[i + 1]);
+                        }
+                        n2++;
+                    }
+                }
+
+                if (!dimensionsAdded)
+                {
+                    addDimension(dim2name, dim2List);
+                    addDimension(dim1name, dim1array);
+                    dimensionsAdded = true;
+                }
+
+                float[] currentvalues = new float[n1 * n2];
+
+                for (int i = 0; i < n2; i++)
+                {
+                    for (int j = 0; j < n1; j++)
+                    {
+                        currentvalues[i * n1 + j] = (float)valuesList[j][i];
+                    }
+                }
+                addVariable(varname, currentvalues);
+            }
+        }
+
+    }
+
+
+    /// <summary>
+    /// Read a file in WOD format and populate the data object
+    /// </summary>
+    /// <param name="filepath">Filepath.</param>
+    public void readWOD(string filepath) {
 		StreamReader sr = new StreamReader (filepath);
 		string currentVarName = "";
 		int currentVarCount = 0;
@@ -269,12 +404,27 @@ public class StructuredData : ScriptableObject {
 		this.grid = grid;
 	}
 
-	/// <summary>
-	/// Add an additional dimension when setting up object.
-	/// </summary>
-	/// <param name="dname">dimension name.</param>
-	/// <param name="dgrid">grid values.</param>
-	public void addDimension(string dname, double [] dgrid) {
+    /// <summary>
+    /// Add an additional dimension when setting up object.
+    /// </summary>
+    /// <param name="dname">dimension name.</param>
+    /// <param name="dgrid">grid values.</param>
+    public void addDimension(string dname, ArrayList algrid)
+    {
+        float[] fgrid = new float[algrid.Count];
+        for (int i = 0; i < algrid.Count; i++)
+        {
+            fgrid[i] = (float)algrid[i];
+        }
+        addDimension(dname, fgrid);
+    }
+
+    /// <summary>
+    /// Add an additional dimension when setting up object.
+    /// </summary>
+    /// <param name="dname">dimension name.</param>
+    /// <param name="dgrid">grid values.</param>
+    public void addDimension(string dname, double [] dgrid) {
 		float [] fgrid = new float[dgrid.Length];
 		for (int i = 0; i < dgrid.Length; i++) {
 			fgrid [i] = (float)dgrid [i];
