@@ -4,8 +4,9 @@
 Material:
   serializedVersion: 6
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
   m_Name: Volumetric
   m_Shader: {fileID: 4800000, guid: 2f429562cc0517e45a35068443db3931, type: 3}
   m_ShaderKeywords: 
@@ -87,7 +88,7 @@ Material:
     - _bY: 1
     - _bZ: 1
     - _emissivity: 2
-    - _maxT: 1
+    - _maxT: 10
     - _minT: 0
     - _nInt: 100
     - _opacity: 2

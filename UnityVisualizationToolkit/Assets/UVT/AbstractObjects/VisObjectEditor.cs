@@ -40,7 +40,9 @@ public class VisObjectEditor : Editor {
 
 			}
 			if (visObject.visType == VisObject.VisType.ISOCONTOUR) {
-				visObject.isoValue = EditorGUILayout.FloatField ("Isocontour Value", visObject.isoValue);
+				//visObject.isoValue = EditorGUILayout.FloatField("Isocontour Value", visObject.isoValue);
+				SerializedProperty isoRange = serializedObject.FindProperty("isoRange");
+				EditorGUILayout.PropertyField(isoRange, new GUIContent("Isocontour Values"), true);
 			}
 			if (visObject.visType == VisObject.VisType.THRESHHOLD) {
 				visObject.threshholdType = (Threshhold.ThreshholdType) 

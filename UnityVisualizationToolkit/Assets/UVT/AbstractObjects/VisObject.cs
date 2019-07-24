@@ -40,11 +40,13 @@ public class VisObject : MonoBehaviour {
 	public float[] colorScale = { 0.0f,0.5f, 1.0f };
 	public Color[] colorMap = { Color.red, Color.green, Color.blue };
 	public float isoValue = 0.0f;
+    public float[] isoRange = new float[] { 0.0f };
 	public float bondWidth = 0.1f;
 	public float atomSize = 0.5f;
 	string depVarLast = null;
 	string colorVarLast = null;
 	float isoValueLast = 0.0f;
+	float[] isoRangeLast = null;
 	public bool forceRefresh = false;
 	public float opacity = 1.0f;
 	public float emissivity = 2.0f;
@@ -55,6 +57,7 @@ public class VisObject : MonoBehaviour {
 	public int maxDepth = 10;
 
 	GameObject visGO = null;
+    GameObject[] visChildren = null;
 
 	DataState dataState = DataState.UNSET;
 
@@ -63,9 +66,19 @@ public class VisObject : MonoBehaviour {
 	/// initialize gameobjects for the visualization
 	/// </summary>
 	void Init() {
-		if (visGO != null) {
-			Destroy (visGO);
+		if (visChildren != null)
+		{
+			for (int i = 0; i < visChildren.Length; i++)
+			{
+				if (visChildren[i] != null)
+				{
+					Destroy(visChildren[i]);
+
+				}
+			}
+			visChildren = null;
 		}
+		if (visGO != null) Destroy(visGO);
 		GetComponent<Renderer> ().enabled = false;
         if (dataObject != null) dataObject.GetComponent<Renderer>().enabled = false;
 		switch (visType) {
@@ -96,28 +109,38 @@ public class VisObject : MonoBehaviour {
 			}
 			break;
 		case(VisType.ISOCONTOUR):
-			{
-				//ColorMap cm = new ColorMap(new Color[] {Color.red,Color.blue}, new float[]{min,max});
-				ColorMap cm = new ColorMap (colorMap,alpha,colorScale);
-				//ColorMap cm = new ColorMap(new Color[] {Color.blue}, new float[]{0});
-				//ColorMap cm = new ColorMap();
-				visGO = IsoContour.CreateGameObject (transform.position, Vector3.one, transform);
-				StructuredData sd = (StructuredData)dataObject.GetComponent<DataObject> ().getData ();
-				float[] x = sd.getDimension (indVarNames [0]);
-				float[] y = sd.getDimension (indVarNames [1]);
-				float[] z = sd.getDimension (indVarNames [2]);
-				float[,,] depValues = sd.getValues3D (depVar);
-				float[,,] colorValues = sd.getValues3D (colorVar);
-                if(colorValues==null)
-                    {
-                        cm = new ColorMap(new Color[] { color }, new float[] { 0 });
-                    }
-				visGO.GetComponent<IsoContour>().buildMesh (x, y, z, depValues, colorValues, isoValue, cm);
-				//m.Optimize ();
-				isoValueLast =  isoValue;
-				depVarLast = depVar;
-				colorVarLast = colorVar;
-			}
+				{
+					//ColorMap cm = new ColorMap(new Color[] {Color.red,Color.blue}, new float[]{min,max});
+					ColorMap cm = new ColorMap(colorMap, alpha, colorScale);
+					//ColorMap cm = new ColorMap(new Color[] {Color.blue}, new float[]{0});
+					//ColorMap cm = new ColorMap();
+					visGO = new GameObject();
+					visChildren = new GameObject[isoRange.Length];
+					for (int i = 0; i < isoRange.Length; i++)
+					{
+						visChildren[i] = IsoContour.CreateGameObject(transform.position, Vector3.one, transform);
+						visChildren[i].transform.parent = visGO.transform;
+					}
+					StructuredData sd = (StructuredData)dataObject.GetComponent<DataObject>().getData();
+					float[] x = sd.getDimension(indVarNames[0]);
+					float[] y = sd.getDimension(indVarNames[1]);
+					float[] z = sd.getDimension(indVarNames[2]);
+					float[,,] depValues = sd.getValues3D(depVar);
+					float[,,] colorValues = sd.getValues3D(colorVar);
+					if (colorValues == null)
+					{
+						cm = new ColorMap(new Color[] { color }, new float[] { 0 });
+					}
+					for (int i = 0; i < isoRange.Length; i++)
+					{
+						visChildren[i].GetComponent<IsoContour>().buildMesh(x, y, z, depValues, colorValues, isoRange[i], cm);
+					}
+				}
+			//m.Optimize ();
+			isoValueLast =  isoValue;
+			isoRangeLast = isoRange;
+			depVarLast = depVar;
+			colorVarLast = colorVar;
 			break;
 		case(VisType.MOLECULE):
 			Molecule mol = (Molecule)dataObject.GetComponent<DataObject> ().getData ();
@@ -234,12 +257,29 @@ public class VisObject : MonoBehaviour {
 			break;
 		case(VisType.ISOCONTOUR):
 			{
-				if (depVarLast != depVar || colorVarLast != colorVar || isoValueLast != isoValue) {
+				if (depVarLast != depVar || colorVarLast != colorVar || isoValueLast != isoValue ||
+				isoRangeLast != isoRange) {
 					ColorMap cm = new ColorMap (colorMap, alpha, colorScale);
 					//ColorMap cm = new ColorMap(new Color[] {Color.blue}, new float[]{0});
 					//ColorMap cm = new ColorMap();
+					if( visChildren!=null) {
+						for(int i=0;i<visChildren.Length;i++) {
+							if (visChildren[i]!=null)
+							{
+								Destroy(visChildren[i]);
+
+							}
+						}
+						visChildren = null;
+					}
 					if(visGO!=null) Destroy(visGO);
-					visGO = IsoContour.CreateGameObject (transform.position, Vector3.one, transform);
+					visGO = new GameObject();
+					visChildren = new GameObject[isoRange.Length];
+					for (int i = 0; i < isoRange.Length; i++)
+					{
+						visChildren[i] = IsoContour.CreateGameObject(transform.position, Vector3.one, transform);
+						visChildren[i].transform.parent = visGO.transform;
+					}
 					StructuredData sd = (StructuredData)dataObject.GetComponent<DataObject> ().getData ();
 					float[] x = sd.getDimension (indVarNames [0]);
 					float[] y = sd.getDimension (indVarNames [1]);
@@ -250,7 +290,10 @@ public class VisObject : MonoBehaviour {
                     {
                         cm = new ColorMap(new Color[] { color }, new float[] { 0 });
                     }
-                    visGO.GetComponent<IsoContour> ().buildMesh (x, y, z, depValues, colorValues, isoValue, cm);
+					for (int i = 0; i < isoRange.Length; i++)
+					{
+						visChildren[i].GetComponent<IsoContour>().buildMesh(x, y, z, depValues, colorValues, isoRange[i], cm);
+					}                   
 					//m.Optimize ();
 					isoValueLast = isoValue;
 					depVarLast = depVar;
