@@ -108,7 +108,8 @@ public class DataObject : MonoBehaviour {
 			    ((UnstructuredData)data).readWODSet ();
 			    break;
             case DataTypes.STRUCTURED_C2D:
-                break;
+				((StructuredData)data).readC2DSet();
+				break;
             case DataTypes.STRUCTURED_WOD:
 			    break;
 		    case DataTypes.MOLECULE_MOL:

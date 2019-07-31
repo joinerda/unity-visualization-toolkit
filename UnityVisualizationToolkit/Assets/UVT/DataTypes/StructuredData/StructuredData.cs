@@ -23,6 +23,8 @@ public class StructuredData : ScriptableObject {
 	float [] values; //variable values at each grid point
 	string [] namesv; // variable names
 
+	StreamReader sr_c2d = null;
+
 	/// <summary>
 	/// Copy structured data into an unstructured format
 	/// </summary>
@@ -61,11 +63,163 @@ public class StructuredData : ScriptableObject {
 		return uData;
 	}
 
-    /// <summary>
-    /// Read a file in CSV2D format and populate the data object
-    /// </summary>
-    /// <param name="filepath">Filepath.</param>
-    public void readC2D(string filepath)
+	public void purgeValues()
+	{
+		nvar=0; //#variables
+		values=null; //variable values at each grid point
+		namesv=null; // variable names
+	}
+
+	/// <summary>
+	/// Read a file in CSV2D format and populate the data object
+	/// </summary>
+	/// <param name="filepath">Filepath.</param>
+	public void readC2DSet()
+	{
+		// read a 2D structured file in CSV format. First row is dimension 1
+		// first element on each row is dimension 2. var name in first corner element
+		/*
+         
+        DIMENSIONS x y
+        z 1 2 3 4
+        1 0 1 2 0
+        2 3 2 1 .2
+        3 7 2 8 9
+        4 2 6 3 4
+        NEWVAR
+        z2 1 2 3 4
+        1 0 1 2 0
+        2 3 2 1 .2
+        3 7 2 8 9
+        4 2 6 3 4
+
+         */
+		StreamReader sr = sr_c2d;
+		string line;
+
+		// purge values
+		purgeValues();
+		string[] words = null;
+
+		// do we need to rewind?
+		if (!IOExtras.ReadLine2(sr,out line))
+		{
+			Debug.Log("Rewinding");
+			sr.BaseStream.Position = 0;
+			sr.DiscardBufferedData();
+			// metadata line
+			IOExtras.ReadLine2(sr, out line);
+			words = IOExtras.StringArray(line);
+			if (!words[0].Equals("DIMENSION", System.StringComparison.OrdinalIgnoreCase))
+			{
+				Debug.Log("INVALID FILE TYPE readCSV2D");
+				return;
+			}
+			if (words.Length < 3)
+			{
+				Debug.Log("INVALID FILE TYPE readCSV2D");
+				return;
+			}
+			IOExtras.ReadLine2(sr, out line);
+
+		}
+
+
+		bool varsToAdd = true;
+		bool firstLine = true;
+
+		int n1 = 0;
+		int n2 = 0;
+		string varname = "";
+		ArrayList dim2List = null;
+		ArrayList[] valuesList = null;
+		float[] dim1array = null;
+
+		while (varsToAdd)
+		{
+			varsToAdd = false;
+
+			// read first line
+			if (firstLine)
+			{
+				firstLine = false;
+				//IOExtras.ReadLine2(sr, out line);
+				words = IOExtras.StringArray(line);
+				varname = words[0];
+				n1 = words.Length - 1;
+				dim1array = new float[n1];
+				for (int i = 0; i < n1; i++)
+				{
+					dim1array[i] = float.Parse(words[i + 1]);
+				}
+
+				n2 = 0;
+				dim2List = new ArrayList();
+				valuesList = new ArrayList[n1];
+				for (int i = 0; i < n1; i++)
+				{
+					valuesList[i] = new ArrayList();
+				}
+			}
+			else
+			{
+				while (IOExtras.ReadLine2(sr, out line))
+				{
+					//IOExtras.ReadLine2(sr, out line);
+					string[] words2 = IOExtras.StringArray(line);
+					if (words2[0].Equals("NEWSET", System.StringComparison.OrdinalIgnoreCase))
+					{
+						break;
+					}
+					else if (words2[0].Equals("NEWVAR", System.StringComparison.OrdinalIgnoreCase))
+					{
+						varsToAdd = true;
+						firstLine = true;
+						break;
+					}
+					else
+					{
+						Debug.Log(line);
+						float[] values = IOExtras.FloatArray(line);
+						if (values.Length != n1 + 1)
+						{
+							Debug.Log("INVALID LINE LENGTH IN readCSV2D");
+							Debug.Log(n1 + 1);
+							Debug.Log(values.Length);
+							Debug.Log(line);
+							return;
+						}
+						dim2List.Add(values[0]);
+						for (int i = 0; i < n1; i++)
+						{
+							valuesList[i].Add(values[i + 1]);
+						}
+						n2++;
+					}
+				}
+
+
+				
+			}
+			float[] currentvalues = new float[n1 * n2];
+
+			for (int i = 0; i < n2; i++)
+			{
+				for (int j = 0; j < n1; j++)
+				{
+					currentvalues[i * n1 + j] = (float)valuesList[j][i];
+				}
+			}
+			addVariable(varname, currentvalues);
+		}
+
+	}
+
+	/// <summary>
+	/// Read a file in CSV2D format and populate the data object
+	/// </summary>
+	/// <param name="filepath">Filepath.</param>
+	public void readC2D(string filepath)
     {
         // read a 2D structured file in CSV format. First row is dimension 1
         // first element on each row is dimension 2. var name in first corner element
@@ -86,6 +240,7 @@ public class StructuredData : ScriptableObject {
 
          */
         StreamReader sr = new StreamReader(filepath);
+		sr_c2d = sr;
         string line;
         // metadata line
         IOExtras.ReadLine2(sr, out line);
@@ -147,7 +302,10 @@ public class StructuredData : ScriptableObject {
                 {
                     //IOExtras.ReadLine2(sr, out line);
                     string[] words2 = IOExtras.StringArray(line);
-                    if (words2[0].Equals("NEWVAR", System.StringComparison.OrdinalIgnoreCase))
+					if(words2[0].Equals("NEWSET",System.StringComparison.OrdinalIgnoreCase))
+					{
+						break;
+					} else if (words2[0].Equals("NEWVAR", System.StringComparison.OrdinalIgnoreCase))
                     {
                         varsToAdd = true;
                         firstLine = true;

@@ -43,6 +43,8 @@ public class VisObjectEditor : Editor {
 				//visObject.isoValue = EditorGUILayout.FloatField("Isocontour Value", visObject.isoValue);
 				SerializedProperty isoRange = serializedObject.FindProperty("isoRange");
 				EditorGUILayout.PropertyField(isoRange, new GUIContent("Isocontour Values"), true);
+				SerializedProperty suppliedMat = serializedObject.FindProperty("suppliedMat");
+				EditorGUILayout.PropertyField(suppliedMat, new GUIContent("Material"), true);
 			}
 			if (visObject.visType == VisObject.VisType.THRESHHOLD) {
 				visObject.threshholdType = (Threshhold.ThreshholdType) 

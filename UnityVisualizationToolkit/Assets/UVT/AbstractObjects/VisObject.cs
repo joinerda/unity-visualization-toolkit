@@ -55,6 +55,7 @@ public class VisObject : MonoBehaviour {
 	public float maxValue = 1.0f;
 	public GameObject threshholdPRE=null;
 	public int maxDepth = 10;
+	public Material suppliedMat = null;
 
 	GameObject visGO = null;
     GameObject[] visChildren = null;
@@ -120,6 +121,7 @@ public class VisObject : MonoBehaviour {
 					{
 						visChildren[i] = IsoContour.CreateGameObject(transform.position, Vector3.one, transform);
 						visChildren[i].transform.parent = visGO.transform;
+						visChildren[i].GetComponent<IsoContour>().suppliedMat = suppliedMat;
 					}
 					StructuredData sd = (StructuredData)dataObject.GetComponent<DataObject>().getData();
 					float[] x = sd.getDimension(indVarNames[0]);
@@ -279,6 +281,7 @@ public class VisObject : MonoBehaviour {
 					{
 						visChildren[i] = IsoContour.CreateGameObject(transform.position, Vector3.one, transform);
 						visChildren[i].transform.parent = visGO.transform;
+						visChildren[i].GetComponent<IsoContour>().suppliedMat = suppliedMat;
 					}
 					StructuredData sd = (StructuredData)dataObject.GetComponent<DataObject> ().getData ();
 					float[] x = sd.getDimension (indVarNames [0]);

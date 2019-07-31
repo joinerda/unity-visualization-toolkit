@@ -8,10 +8,14 @@ using System.Collections;
 public class IsoContour : MonoBehaviour  {
 
 	public Mesh m = null;
+	public Material suppliedMat = null;
+	Mesh mFlipped = null;
+
 
 	public static GameObject CreateGameObject(Vector3 pos, Vector3 scale, Transform parent) {
 		GameObject go = new GameObject ();
 		go.AddComponent<IsoContour> ();
+		go.AddComponent<MeshRenderer>();
 		go.transform.parent = parent;
 		go.transform.localPosition = Vector3.zero;
 		go.transform.position = pos;
@@ -379,13 +383,44 @@ public class IsoContour : MonoBehaviour  {
 		}
 	}
 
+	
+
 	public void buildMesh(float [] x, float [] y, float [] z, float [,,] values, float [,,] cValues, float isolevel, ColorMap cm) {
 		m = buildMeshStatic (x, y, z, values, cValues, isolevel, cm);
-			
-	}
-		
+		mFlipped = CopyMesh(m);
 
-		
+
+		int[] triangles = mFlipped.triangles;
+		for (int i = 0; i < triangles.Length; i += 3)
+		{
+			int temp = triangles[i + 1];
+			triangles[i + 1] = triangles[i + 2];
+			triangles[i + 2] = temp;
+		}
+		mFlipped.triangles = triangles;
+
+		Vector3 [] vertices = mFlipped.vertices;
+		for(int i=0;i<vertices.Length;i++)
+		{
+			vertices[i] += 0.000001f*Vector3.one;
+		}
+		mFlipped.vertices = vertices;
+	}
+
+
+	static Mesh CopyMesh(Mesh mesh)
+	{
+		Mesh newmesh = new Mesh();
+		newmesh.vertices = mesh.vertices;
+		newmesh.triangles = mesh.triangles;
+		newmesh.uv = mesh.uv;
+		newmesh.normals = mesh.normals;
+		newmesh.colors = mesh.colors;
+		newmesh.tangents = mesh.tangents;
+		return newmesh;
+	}
+
+
 	public static Mesh buildMeshStatic(float [] x, float [] y, float [] z, float [,,] values, float [,,] cValues, float isolevel, ColorMap cm) {
 		int nx = x.Length;
 		int ny = y.Length;
@@ -467,8 +502,8 @@ public class IsoContour : MonoBehaviour  {
 		m.triangles = tl.getTriangles ();
 		m.colors = tl.getColors();
 		m.uv = tl.getYViewUVs ();
-		//m.RecalculateBounds ();
-		//m.RecalculateNormals ();
+		m.RecalculateBounds ();
+		m.RecalculateNormals ();
 		//m.normals = tl.getUpNormals ();
 		//mr.material = new Material (Shader.Find ("AlphaVertexUnlit"));
 		//mr.material = new Material (Shader.Find ("Standard"));
@@ -718,11 +753,23 @@ public class IsoContour : MonoBehaviour  {
 
 	public void Update() {
 		if (m != null) {
-			Material mat = 	new Material (Shader.Find ("AlphaVertexUnlit"));
+			Material mat = suppliedMat;
+			if(mat==null) { 
+				mat = 	new Material (Shader.Find ("AlphaVertexUnlit"));
+			} else
+			{
+				mat = new Material(mat);
+				mat.color = m.colors[0];
+			}
 			Matrix4x4 trs = Matrix4x4.TRS (transform.position, transform.rotation, 
 				Vector3.Scale (transform.parent.localScale, transform.localScale));
-			//Graphics.DrawMesh (m, transform.position, Quaternion.identity, mat, 0);
-			Graphics.DrawMesh (m, trs, mat, 1);
+			MaterialPropertyBlock mpb = new MaterialPropertyBlock();
+			mpb.SetColor("_Color",m.colors[0]);
+			GetComponent<Renderer>().SetPropertyBlock(mpb);
+			Graphics.DrawMesh(m, trs, mat, 1);
+			Graphics.DrawMesh(mFlipped, trs, mat, 1);
+			//Graphics.DrawMesh(m, transform.position, Quaternion.identity, mat, 0);
+
 		}
 	}
 
