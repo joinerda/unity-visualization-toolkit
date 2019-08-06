@@ -16,6 +16,8 @@ public class MeshGrid : MonoBehaviour {
 	float [] z;
 	float [] u; 
 	float alpha = 1.0f;
+	public float zScale = 1.0f;
+	Mesh mFlipped = null;
 
 	ColorMap cm = null;
 	Color color = Color.white;
@@ -95,6 +97,86 @@ public class MeshGrid : MonoBehaviour {
 		return remapGrid (x_mapped, y_mapped);
 	}
 
+	public Mesh remapToSphere()
+	{
+		return remapToSphere(-90,90,-180,180,1);
+	}
+
+	static Mesh CopyMesh(Mesh mesh)
+	{
+		Mesh newmesh = new Mesh();
+		newmesh.vertices = mesh.vertices;
+		newmesh.triangles = mesh.triangles;
+		newmesh.uv = mesh.uv;
+		newmesh.normals = mesh.normals;
+		newmesh.colors = mesh.colors;
+		newmesh.tangents = mesh.tangents;
+		return newmesh;
+	}
+
+	public Mesh remapToSphere(float latMin, float latMax, float lonMin, float lonMax, float R, bool latLonFlipped = false)
+	{
+
+		// scale x and y from min/max to lat/lon around sphere.
+		int nx = x.Length;
+		int ny = y.Length;
+
+		Vector3[] vertices = new Vector3[nx * ny];
+	
+		for (int i = 0; i < nx; i++)
+		{
+			for (int j = 0; j < ny; j++)
+			{
+				int iv = ny * i + j;
+				float lon = 0;
+				float lat = 0;
+
+				if(latLonFlipped)
+				{
+					lon = (y[j] - lonMin) / (lonMax - lonMin) * 2.0f * Mathf.PI;
+					lat = (latMax - x[i]) / (latMax - latMin) * Mathf.PI;
+				} else
+				{
+					lon = (x[i] - lonMin) / (lonMax - lonMin) * 2.0f * Mathf.PI;
+					lat = (latMax - y[j]) / (latMax - latMin) * Mathf.PI;
+				}
+
+				float xmapped = R * Mathf.Sin(lat) * Mathf.Cos(lon);
+				float ymapped = R * Mathf.Sin(lat) * Mathf.Sin(lon);
+				float zmapped = R * Mathf.Cos(lat);
+
+				vertices[iv] = new Vector3(xmapped,zmapped, ymapped);
+				vertices[iv] += vertices[iv].normalized*zScale*z[i*ny+j];
+			}
+		}
+				
+		m.vertices = vertices;
+		
+		m.RecalculateBounds();
+		m.RecalculateNormals();
+
+		mFlipped = CopyMesh(m);
+
+
+		int[] triangles = mFlipped.triangles;
+		for (int i = 0; i < triangles.Length; i += 3)
+		{
+			int temp = triangles[i + 1];
+			triangles[i + 1] = triangles[i + 2];
+			triangles[i + 2] = temp;
+		}
+		mFlipped.triangles = triangles;
+
+		vertices = mFlipped.vertices;
+		for (int i = 0; i < vertices.Length; i++)
+		{
+			vertices[i] += 0.000001f * Vector3.one;
+		}
+		mFlipped.vertices = vertices;
+
+		return m;
+	}
+
 	public Mesh remapGrid(float [] x_mapped, float []y_mapped) {
 		// remap grid to a non-rectilinear x-y set of values
 		int nx = x.Length;
@@ -109,52 +191,7 @@ public class MeshGrid : MonoBehaviour {
 			for (int j = 0; j < ny; j++) {
 				int iv = nx * i + j;
 
-				vertices [iv] = new Vector3 ((float)x_mapped [i*nx+j], (float)z[i*nx+j], (float)y_mapped [i*nx+j]);
-				uvs [iv] = new Vector2 ((float)i / (float)nx, (float)j / (float)ny);
-				if(i<nx-1&&j<ny-1) {
-					int it = i * (nx - 1) + j;
-					triangles [it * 6] = iv;
-					triangles [it * 6 + 1] = iv + 1;
-					triangles [it * 6 + 2] = iv + nx + 1;
-					triangles [it * 6 + 3] = iv;
-					triangles [it * 6 + 4] = iv + nx + 1;
-					triangles [it * 6 + 5] = iv + nx;
-				}
-				if (u != null)
-					colors [iv] = evalGScale (u [i * nx + j]);
-				else
-					colors [iv] = color;
-			}
-		}
-		m.vertices = vertices;
-		//m.uv = uvs;
-		m.triangles = triangles;
-		m.colors = colors;
-		m.RecalculateBounds ();
-		m.RecalculateNormals ();
-		//mr.material = new Material (Shader.Find ("Unlit/VertexColorUnlit"));
-		//mr.material = new Material (Shader.Find ("AlphaVertexUnlit"));
-		//mf.mesh = m;
-		//mc.sharedMesh = m;
-		return m;
-	}
-
-	public Mesh updateGrid() {
-		
-		int nx = x.Length;
-		int ny = y.Length;
-
-		Vector3[] vertices = new Vector3[nx * ny];
-		Vector2[] uvs = new Vector2[nx * ny];
-		Color[] colors = new Color[nx * ny];
-		int[] triangles = new int[(nx - 1) * (ny - 1) * 6];
-
-
-		for(int i=0;i<nx;i++) {
-			for (int j = 0; j < ny; j++) {
-				int iv = ny * i + j;
-
-				vertices [iv] = new Vector3 ((float)x [i], (float)z[i*ny+j], (float)y [j]);
+				vertices [iv] = new Vector3 ((float)x_mapped [i*ny+j], zScale*(float)z[i*ny+j], (float)y_mapped [i*ny+j]);
 				uvs [iv] = new Vector2 ((float)i / (float)nx, (float)j / (float)ny);
 				if(i<nx-1&&j<ny-1) {
 					int it = i * (ny - 1) + j;
@@ -181,6 +218,92 @@ public class MeshGrid : MonoBehaviour {
 		//mr.material = new Material (Shader.Find ("AlphaVertexUnlit"));
 		//mf.mesh = m;
 		//mc.sharedMesh = m;
+
+		mFlipped = CopyMesh(m);
+
+
+		triangles = mFlipped.triangles;
+		for (int i = 0; i < triangles.Length; i += 3)
+		{
+			int temp = triangles[i + 1];
+			triangles[i + 1] = triangles[i + 2];
+			triangles[i + 2] = temp;
+		}
+		mFlipped.triangles = triangles;
+
+		vertices = mFlipped.vertices;
+		for (int i = 0; i < vertices.Length; i++)
+		{
+			vertices[i] += 0.000001f * Vector3.one;
+		}
+		mFlipped.vertices = vertices;
+
+		return m;
+	}
+
+	public Mesh updateGrid() {
+		
+		int nx = x.Length;
+		int ny = y.Length;
+
+		Vector3[] vertices = new Vector3[nx * ny];
+		Vector2[] uvs = new Vector2[nx * ny];
+		Color[] colors = new Color[nx * ny];
+		int[] triangles = new int[(nx - 1) * (ny - 1) * 6];
+
+
+		for(int i=0;i<nx;i++) {
+			for (int j = 0; j < ny; j++) {
+				int iv = ny * i + j;
+
+				vertices [iv] = new Vector3 ((float)x [i], zScale*(float)z[i*ny+j], (float)y [j]);
+				uvs [iv] = new Vector2 ((float)i / (float)nx, (float)j / (float)ny);
+				if(i<nx-1&&j<ny-1) {
+					int it = i * (ny - 1) + j;
+					triangles [it * 6] = iv;
+					triangles [it * 6 + 1] = iv + 1;
+					triangles [it * 6 + 2] = iv + ny + 1;
+					triangles [it * 6 + 3] = iv;
+					triangles [it * 6 + 4] = iv + ny + 1;
+					triangles [it * 6 + 5] = iv + ny;
+				}
+				if (u != null)
+					colors [iv] = evalGScale (u [i * ny + j]);
+				else
+					colors [iv] = color;
+			}
+		}
+		m.vertices = vertices;
+		//m.uv = uvs;
+		m.triangles = triangles;
+		m.colors = colors;
+		m.RecalculateBounds ();
+		m.RecalculateNormals ();
+		//mr.material = new Material (Shader.Find ("Unlit/VertexColorUnlit"));
+		//mr.material = new Material (Shader.Find ("AlphaVertexUnlit"));
+		//mf.mesh = m;
+		//mc.sharedMesh = m;
+
+
+		mFlipped = CopyMesh(m);
+
+
+		triangles = mFlipped.triangles;
+		for (int i = 0; i < triangles.Length; i += 3)
+		{
+			int temp = triangles[i + 1];
+			triangles[i + 1] = triangles[i + 2];
+			triangles[i + 2] = temp;
+		}
+		mFlipped.triangles = triangles;
+
+		vertices = mFlipped.vertices;
+		for (int i = 0; i < vertices.Length; i++)
+		{
+			vertices[i] += 0.000001f * Vector3.one;
+		}
+		mFlipped.vertices = vertices;
+
 		return m;
 	}
 
@@ -251,7 +374,7 @@ public class MeshGrid : MonoBehaviour {
 			for (int j = 0; j < ny; j++) {
 				int iv = ny * i + j;
 
-				vertices [iv] = new Vector3 ((float)x [i], (float)z[iv], (float)y [j]);
+				vertices [iv] = new Vector3 ((float)x [i], zScale*(float)z[iv], (float)y [j]);
 				uvs [iv] = new Vector2 ((float)i / (float)nx, (float)j / (float)ny);
 				if(i<nx-1&&j<ny-1) {
 					int it = i * (ny - 1) + j;
@@ -278,16 +401,47 @@ public class MeshGrid : MonoBehaviour {
 		//mr.material = new Material (Shader.Find ("AlphaVertexUnlit"));
 		//mf.mesh = m;
 		//mc.sharedMesh = m;
+
+		mFlipped = CopyMesh(m);
+
+
+		triangles = mFlipped.triangles;
+		for (int i = 0; i < triangles.Length; i += 3)
+		{
+			int temp = triangles[i + 1];
+			triangles[i + 1] = triangles[i + 2];
+			triangles[i + 2] = temp;
+		}
+		mFlipped.triangles = triangles;
+
+		vertices = mFlipped.vertices;
+		for (int i = 0; i < vertices.Length; i++)
+		{
+			vertices[i] += 0.000001f * Vector3.one;
+		}
+		mFlipped.vertices = vertices;
 		return m;
 	}
 
 	public void Update() {
 		if (m != null) {
-			Material mat = 	new Material (Shader.Find ("AlphaVertexUnlit"));
+
+			//Material mat = 	new Material (Shader.Find ("AlphaVertexUnlit"));
+			Material mat = 	new Material (Shader.Find ("Particles/Standard Unlit"));
+			mat.SetFloat("_Mode", 2);
+			mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+			mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+			mat.SetInt("_ZWrite", 0);
+			mat.DisableKeyword("_ALPHATEST_ON");
+			mat.EnableKeyword("_ALPHABLEND_ON");
+			mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+			mat.renderQueue = 3000;
 			Matrix4x4 trs = Matrix4x4.TRS (transform.position, transform.rotation, 
 				                Vector3.Scale (transform.parent.localScale, transform.localScale));
 			//Graphics.DrawMesh (m, transform.position, Quaternion.identity, mat, 0);
 			Graphics.DrawMesh (m, trs, mat, 0);
+			Graphics.DrawMesh(mFlipped, trs, mat, 1);
+
 		}
 	}
 

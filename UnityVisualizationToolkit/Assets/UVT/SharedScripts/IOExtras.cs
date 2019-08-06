@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+
 using System.IO;
 
 
@@ -104,6 +106,22 @@ public class IOExtras {
 	/// </summary>
 	/// <returns>The array.</returns>
 	/// <param name="line">Line.</param>
+	public static double[] DoubleArray(string line)
+	{
+		string[] words = line.Split(delimChar);
+		double[] values = new double[words.Length];
+		for (int i = 0; i < words.Length; i++)
+		{
+			values[i] = double.Parse(words[i]);
+		}
+		return values;
+	}
+
+	/// <summary>
+	/// Given a line, return as an array of floats
+	/// </summary>
+	/// <returns>The array.</returns>
+	/// <param name="line">Line.</param>
 	public static float [] FloatArray(string line) {
 		string[] words = line.Split (delimChar);
 		float[] values = new float[words.Length];
@@ -142,5 +160,27 @@ public class IOExtras {
 		else
 			val = null;
 		return n;
+	}
+
+	public static StreamReader getReader(string filename)
+	{
+		string filepath = Application.dataPath + "/StreamingAssets/LocalFiles/" + filename;
+		StreamReader sr = new StreamReader(filepath);
+		return sr;
+	}
+
+	public static string [] readLines(string filename)
+	{
+		StreamReader sr = IOExtras.getReader(filename);
+		List<string> list = new List<string>();
+		string line;
+		while (IOExtras.ReadLine2(sr, out line))
+		{
+			list.Add(line);
+		}
+		string[] lines = list.ToArray();
+
+
+		return lines;
 	}
 }

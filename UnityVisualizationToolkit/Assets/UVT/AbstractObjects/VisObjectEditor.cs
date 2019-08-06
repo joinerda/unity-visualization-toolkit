@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 
 using System.Collections;
 using System.Collections.Generic;
@@ -21,7 +21,14 @@ public class VisObjectEditor : Editor {
 
 		visObject.dataObject = (GameObject) EditorGUILayout.ObjectField ("Data Object",visObject.dataObject,typeof(GameObject),true);
 		visObject.animate = EditorGUILayout.Toggle ("Animate", visObject.animate);
+		if(visObject.animate)
+		{
+			visObject.animationLag = EditorGUILayout.FloatField("Animation Lag Time", visObject.animationLag);
+
+		}
 		visObject.visType = (VisObject.VisType) EditorGUILayout.EnumPopup ("Vis Type", visObject.visType);
+		visObject.alpha = EditorGUILayout.FloatField("Alpha", visObject.alpha);
+
 		if (visObject.visType != VisObject.VisType.MOLECULE) {
 			SerializedProperty indVarNames = serializedObject.FindProperty ("indVarNames");
 			EditorGUILayout.PropertyField (indVarNames, new GUIContent ("Independent Variable Names"), true);
@@ -38,6 +45,18 @@ public class VisObjectEditor : Editor {
 				visObject.opacity = EditorGUILayout.FloatField ("Opacity", visObject.opacity);
 				visObject.emissivity = EditorGUILayout.FloatField ("Emissivity", visObject.emissivity);
 
+			}
+			if (visObject.visType == VisObject.VisType.SURFACE)
+			{
+				visObject.zScale = EditorGUILayout.FloatField("Z Scale", visObject.zScale);
+				visObject.mapSurfaceToSphere = EditorGUILayout.Toggle("Map to Sphere", visObject.mapSurfaceToSphere);
+				if(visObject.mapSurfaceToSphere)
+				{
+					visObject.latLonFlipped = EditorGUILayout.Toggle("Flip Lat/Lon", visObject.latLonFlipped);
+
+					SerializedProperty mapSurfaceBounds = serializedObject.FindProperty("mapSurfaceBounds");
+					EditorGUILayout.PropertyField(mapSurfaceBounds, new GUIContent("Lat/Lon/R"), true);
+				}
 			}
 			if (visObject.visType == VisObject.VisType.ISOCONTOUR) {
 				//visObject.isoValue = EditorGUILayout.FloatField("Isocontour Value", visObject.isoValue);

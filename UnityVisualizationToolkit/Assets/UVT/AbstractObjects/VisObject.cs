@@ -13,6 +13,10 @@ public class VisObject : MonoBehaviour {
 
 	public GameObject dataObject = null;
 	public bool animate = false;
+	bool newAnimationStep = false;
+
+	public float animationTimer = 0.0f;
+	public float animationLag = 3.0f;
 
 	public enum DataState {
 		UNSET,PENDING,READY
@@ -56,6 +60,10 @@ public class VisObject : MonoBehaviour {
 	public GameObject threshholdPRE=null;
 	public int maxDepth = 10;
 	public Material suppliedMat = null;
+	public float zScale = 1.0f;
+	public bool mapSurfaceToSphere = false;
+	public float [] mapSurfaceBounds = { -90,90,-180,180,1 };
+	public bool latLonFlipped = false;
 
 	GameObject visGO = null;
     GameObject[] visChildren = null;
@@ -102,10 +110,16 @@ public class VisObject : MonoBehaviour {
 				visGO = MeshGrid.CreateGameObject (transform.localPosition, Vector3.one, transform);
 				ColorMap cm = new ColorMap ();
 				cm.init (colorMap, alpha, colorScale);
-				visGO.GetComponent<MeshGrid> ().setColorMap (cm);
-				visGO.GetComponent<MeshGrid> ().createGrid ((StructuredData)dataObject.GetComponent<DataObject> ().getData (),
+					visGO.GetComponent<MeshGrid>().setColorMap(cm);
+					visGO.GetComponent<MeshGrid>().zScale = zScale;
+					visGO.GetComponent<MeshGrid> ().createGrid ((StructuredData)dataObject.GetComponent<DataObject> ().getData (),
 					indVarNames [0], indVarNames [1], depVar, colorVar);
-				depVarLast = depVar;
+					if(mapSurfaceToSphere)
+					{
+						visGO.GetComponent<MeshGrid>().remapToSphere(mapSurfaceBounds[0],
+							mapSurfaceBounds[1], mapSurfaceBounds[2], mapSurfaceBounds[3], mapSurfaceBounds[4], latLonFlipped);
+					}
+					depVarLast = depVar;
 				colorVarLast = colorVar;
 			}
 			break;
@@ -253,9 +267,22 @@ public class VisObject : MonoBehaviour {
 					colorVarLast = colorVar;
 				}
 				visGO.GetComponent<MeshGrid> ().setColorMap (cm);
-				visGO.GetComponent<MeshGrid> ().updateGrid ();
+				visGO.GetComponent<MeshGrid>().zScale = zScale;
+				if(newAnimationStep)
+				{
+					visGO.GetComponent<MeshGrid>().createGrid((StructuredData)dataObject.GetComponent<DataObject>().getData(),
+						indVarNames[0], indVarNames[1], depVar, colorVar);
+					} else
+				{
+					visGO.GetComponent<MeshGrid>().updateGrid();
+				}
+				if (mapSurfaceToSphere)
+				{
+					visGO.GetComponent<MeshGrid>().remapToSphere(mapSurfaceBounds[0],
+												mapSurfaceBounds[1], mapSurfaceBounds[2], mapSurfaceBounds[3], mapSurfaceBounds[4], latLonFlipped);
+				}
 
-			}
+				}
 			break;
 		case(VisType.ISOCONTOUR):
 			{
@@ -345,8 +372,6 @@ public class VisObject : MonoBehaviour {
 		dataState = DataState.PENDING;
 	}
 
-	float animationTimer = 0.0f;
-	float animationLag = 3.0f;
 	
 	// Update is called once per frame
 	void Update () {
@@ -363,6 +388,8 @@ public class VisObject : MonoBehaviour {
 			if (animationTimer > animationLag && animate) {
 				DataObject dob = dataObject.GetComponent<DataObject> ();
 				dob.nextSet ();
+				animationTimer = 0.0f;
+				newAnimationStep = true;
 			}
 			applySettings ();
 			if (forceRefresh) {

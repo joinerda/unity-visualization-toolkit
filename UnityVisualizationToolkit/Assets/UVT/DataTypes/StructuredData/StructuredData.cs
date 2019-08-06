@@ -100,6 +100,7 @@ public class StructuredData : ScriptableObject {
 		// purge values
 		purgeValues();
 		string[] words = null;
+		bool skipLine = false;
 
 		// do we need to rewind?
 		if (!IOExtras.ReadLine2(sr,out line))
@@ -120,8 +121,10 @@ public class StructuredData : ScriptableObject {
 				Debug.Log("INVALID FILE TYPE readCSV2D");
 				return;
 			}
-			IOExtras.ReadLine2(sr, out line);
 
+		} else
+		{
+			skipLine = true;
 		}
 
 
@@ -137,13 +140,14 @@ public class StructuredData : ScriptableObject {
 
 		while (varsToAdd)
 		{
-			varsToAdd = false;
 
 			// read first line
 			if (firstLine)
 			{
 				firstLine = false;
-				//IOExtras.ReadLine2(sr, out line);
+				if(!skipLine) {
+					IOExtras.ReadLine2(sr, out line);
+				}
 				words = IOExtras.StringArray(line);
 				varname = words[0];
 				n1 = words.Length - 1;
@@ -163,6 +167,8 @@ public class StructuredData : ScriptableObject {
 			}
 			else
 			{
+				varsToAdd = false;
+
 				while (IOExtras.ReadLine2(sr, out line))
 				{
 					//IOExtras.ReadLine2(sr, out line);
@@ -179,7 +185,6 @@ public class StructuredData : ScriptableObject {
 					}
 					else
 					{
-						Debug.Log(line);
 						float[] values = IOExtras.FloatArray(line);
 						if (values.Length != n1 + 1)
 						{
@@ -197,20 +202,21 @@ public class StructuredData : ScriptableObject {
 						n2++;
 					}
 				}
+				float[] currentvalues = new float[n1 * n2];
 
-
-				
-			}
-			float[] currentvalues = new float[n1 * n2];
-
-			for (int i = 0; i < n2; i++)
-			{
-				for (int j = 0; j < n1; j++)
+				for (int i = 0; i < n2; i++)
 				{
-					currentvalues[i * n1 + j] = (float)valuesList[j][i];
+					for (int j = 0; j < n1; j++)
+					{
+						currentvalues[i * n1 + j] = (float)valuesList[j][i];
+					}
 				}
+
+				addVariable(varname, currentvalues);
 			}
-			addVariable(varname, currentvalues);
+			
+
+
 		}
 
 	}
@@ -514,7 +520,9 @@ public class StructuredData : ScriptableObject {
 	public void addVariable(string name, float [] dvalues) {
 		int stride = calcStride ();
 		if (dvalues.Length != stride) {
-			Debug.LogAssertion ("StructuredData.addVariable length of values does not match grid spacing");
+			Debug.LogAssertion("StructuredData.addVariable length of values does not match grid spacing");
+			Debug.LogAssertion(string.Format("DVALUES.LENGTH = {0}", dvalues.Length));
+			Debug.LogAssertion(string.Format("STRIDE = {0}", stride));
 			return;
 		}
 		if (nvar == 0) {
