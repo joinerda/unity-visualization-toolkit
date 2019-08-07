@@ -17,12 +17,12 @@ public class DataObject : MonoBehaviour {
     /// </summary>
     public enum DataTypes
     {
-        STRUCTURED_WOD, STRUCTURED_C2D, UNSTRUCTURED_WOD, UNSTRUCTURED_CSV, MOLECULE_MOL
+        STRUCTURED_WOD, STRUCTURED_C2D, UNSTRUCTURED_WOD, UNSTRUCTURED_CSV, MOLECULE_MOL, MANUAL
     };
     string[] DataTypeNames = {"Structured (WOD)","Structured (C2D)",
         "Unstructured (WOD)",
         "Unstructured (CSV)",
-        "Molecule (MOL)"};
+        "Molecule (MOL)", "MANUAL (coded)"};
 
     public string filename = "csv_input.txt";
 	string filepath;
@@ -37,8 +37,35 @@ public class DataObject : MonoBehaviour {
 		return data;
 	}
 
+	public void setData(System.Object data)
+	{
+		if(dataType != DataTypes.MANUAL)
+		{
+			Debug.Log("setData only allowed for data type MANUAL");
+			return;
+		}
+		if(data.GetType() == typeof(StructuredData))
+		{
+			this.data = data;
+		} else if(data.GetType() == typeof(UnstructuredData))
+		{
+			this.data = data;
+		}
+		else if(data.GetType()==typeof(Molecule))
+		{
+			this.data = data;
+		}
+		else
+		{
+			Debug.Log("Manual setting of data not supported for this type");
+		}
+	}
+
 	void processFilepath(string filepath){
 		switch (dataType) {
+			case DataTypes.MANUAL:
+				Debug.Log("processFilePath not supported for data type MANUAL");
+				break;
 		    case DataTypes.UNSTRUCTURED_CSV:
 			    data = ScriptableObject.CreateInstance ("UnstructuredData");
 			    ((UnstructuredData)data).readCSV (filepath);
@@ -74,7 +101,9 @@ public class DataObject : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		filepath = Application.dataPath+"/StreamingAssets/LocalFiles/"+filename;
-		processFilepath (filepath);
+		if(dataType!= DataTypes.MANUAL) { 
+			processFilepath (filepath);
+		}
 		/*
 		dataInfoBox = (GameObject)Instantiate (dataInfoPRE, GameObject.Find ("Canvas").transform);
 		dibButton = dataInfoBox.GetComponentInChildren<Button> () as Button;
@@ -100,20 +129,23 @@ public class DataObject : MonoBehaviour {
 	/// <summary>
 	/// Advance WOD unstructured file to the next set
 	/// </summary>
-	public void nextSet() {
+	public void nextSet(bool skipData=false) {
 		switch (dataType) {
 		    case DataTypes.UNSTRUCTURED_CSV:
 			    break;
 		    case DataTypes.UNSTRUCTURED_WOD:
-			    ((UnstructuredData)data).readWODSet ();
+			    ((UnstructuredData)data).readWODSet ();// add data skip at some point
 			    break;
             case DataTypes.STRUCTURED_C2D:
-				((StructuredData)data).readC2DSet();
+				((StructuredData)data).readC2DSet(skipData);
 				break;
             case DataTypes.STRUCTURED_WOD:
 			    break;
 		    case DataTypes.MOLECULE_MOL:
 			    break;
+			case DataTypes.MANUAL:
+				Debug.Log("set reading not supported for data type MANUAL");
+				break;
 		    default:
 			    break;
 		}

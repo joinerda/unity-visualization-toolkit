@@ -24,6 +24,7 @@ public class VisObjectEditor : Editor {
 		if(visObject.animate)
 		{
 			visObject.animationLag = EditorGUILayout.FloatField("Animation Lag Time", visObject.animationLag);
+			visObject.animationSkip = EditorGUILayout.IntField("Animation Skip Step", visObject.animationSkip);
 
 		}
 		visObject.visType = (VisObject.VisType) EditorGUILayout.EnumPopup ("Vis Type", visObject.visType);

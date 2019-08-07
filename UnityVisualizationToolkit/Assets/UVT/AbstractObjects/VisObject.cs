@@ -13,7 +13,9 @@ public class VisObject : MonoBehaviour {
 
 	public GameObject dataObject = null;
 	public bool animate = false;
-	bool newAnimationStep = false;
+	public bool newAnimationStep = false;
+	public int animationSkip = 1;
+	public int animationStep = 1;
 
 	public float animationTimer = 0.0f;
 	public float animationLag = 3.0f;
@@ -385,11 +387,19 @@ public class VisObject : MonoBehaviour {
 			}
 		} else if (dataState == DataState.READY) {
 			animationTimer += Time.deltaTime;
-			if (animationTimer > animationLag && animate) {
+			if (animationTimer >= animationLag && animate) {
 				DataObject dob = dataObject.GetComponent<DataObject> ();
-				dob.nextSet ();
 				animationTimer = 0.0f;
-				newAnimationStep = true;
+				animationStep = (animationStep + 1) % animationSkip;
+				if (animationStep==0)
+				{
+					newAnimationStep = true;
+					dob.nextSet();
+				}
+				else
+				{
+					dob.nextSet(true);
+				}
 			}
 			applySettings ();
 			if (forceRefresh) {

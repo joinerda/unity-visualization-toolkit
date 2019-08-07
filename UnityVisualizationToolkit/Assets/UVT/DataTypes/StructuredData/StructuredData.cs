@@ -74,7 +74,7 @@ public class StructuredData : ScriptableObject {
 	/// Read a file in CSV2D format and populate the data object
 	/// </summary>
 	/// <param name="filepath">Filepath.</param>
-	public void readC2DSet()
+	public void readC2DSet(bool skipData=false)
 	{
 		// read a 2D structured file in CSV format. First row is dimension 1
 		// first element on each row is dimension 2. var name in first corner element
@@ -98,9 +98,8 @@ public class StructuredData : ScriptableObject {
 		string line;
 
 		// purge values
-		purgeValues();
+		if(!skipData) purgeValues();
 		string[] words = null;
-		bool skipLine = false;
 
 		// do we need to rewind?
 		if (!IOExtras.ReadLine2(sr,out line))
@@ -121,10 +120,22 @@ public class StructuredData : ScriptableObject {
 				Debug.Log("INVALID FILE TYPE readCSV2D");
 				return;
 			}
+			IOExtras.ReadLine2(sr, out line);
 
-		} else
+		}
+
+		if(skipData) // if not reading data just go to end of file or next NEWSET
 		{
-			skipLine = true;
+			while (IOExtras.ReadLine2(sr, out line))
+			{
+				//IOExtras.ReadLine2(sr, out line);
+				string[] words2 = IOExtras.StringArray(line);
+				if (words2[0].Equals("NEWSET", System.StringComparison.OrdinalIgnoreCase))
+				{
+					break;
+				}
+			}
+			return;
 		}
 
 
@@ -145,9 +156,7 @@ public class StructuredData : ScriptableObject {
 			if (firstLine)
 			{
 				firstLine = false;
-				if(!skipLine) {
-					IOExtras.ReadLine2(sr, out line);
-				}
+				//IOExtras.ReadLine2(sr, out line);
 				words = IOExtras.StringArray(line);
 				varname = words[0];
 				n1 = words.Length - 1;
@@ -159,10 +168,12 @@ public class StructuredData : ScriptableObject {
 
 				n2 = 0;
 				dim2List = new ArrayList();
-				valuesList = new ArrayList[n1];
-				for (int i = 0; i < n1; i++)
-				{
-					valuesList[i] = new ArrayList();
+				if(!skipData) { 
+					valuesList = new ArrayList[n1];
+					for (int i = 0; i < n1; i++)
+					{
+						valuesList[i] = new ArrayList();
+					}
 				}
 			}
 			else
@@ -183,7 +194,7 @@ public class StructuredData : ScriptableObject {
 						firstLine = true;
 						break;
 					}
-					else
+					else if(!skipData)
 					{
 						float[] values = IOExtras.FloatArray(line);
 						if (values.Length != n1 + 1)
@@ -202,20 +213,20 @@ public class StructuredData : ScriptableObject {
 						n2++;
 					}
 				}
-				float[] currentvalues = new float[n1 * n2];
 
-				for (int i = 0; i < n2; i++)
-				{
-					for (int j = 0; j < n1; j++)
+				if(!skipData) { 
+					float[] currentvalues = new float[n1 * n2];
+
+					for (int i = 0; i < n2; i++)
 					{
-						currentvalues[i * n1 + j] = (float)valuesList[j][i];
+						for (int j = 0; j < n1; j++)
+						{
+							currentvalues[i * n1 + j] = (float)valuesList[j][i];
+						}
 					}
+					addVariable(varname, currentvalues);
 				}
-
-				addVariable(varname, currentvalues);
 			}
-			
-
 
 		}
 
@@ -512,17 +523,22 @@ public class StructuredData : ScriptableObject {
 		addVariable(name,array3DTo1D(dvalues));
 	}
 
-	/// <summary>
-	/// Add a new variable given input in [,,] format
-	/// </summary>
-	/// <param name="name">variable name.</param>
-	/// <param name="dvalues">values.</param>
-	public void addVariable(string name, float [] dvalues) {
+	public void addVariable(string name, double[] dvalues)
+	{
+		float [] fvalues = new float[dvalues.Length];
+		for(int i=0;i<fvalues.Length;i++) fvalues[i]=(float)dvalues[i];
+		addVariable(name,fvalues);
+	}
+
+		/// <summary>
+		/// Add a new variable given input in [,,] format
+		/// </summary>
+		/// <param name="name">variable name.</param>
+		/// <param name="dvalues">values.</param>
+		public void addVariable(string name, float [] dvalues) {
 		int stride = calcStride ();
 		if (dvalues.Length != stride) {
-			Debug.LogAssertion("StructuredData.addVariable length of values does not match grid spacing");
-			Debug.LogAssertion(string.Format("DVALUES.LENGTH = {0}", dvalues.Length));
-			Debug.LogAssertion(string.Format("STRIDE = {0}", stride));
+			Debug.LogAssertion ("StructuredData.addVariable length of values does not match grid spacing");
 			return;
 		}
 		if (nvar == 0) {
